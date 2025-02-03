@@ -1,0 +1,4 @@
+*.ppm
+images/*
+main
+main.DSYM
