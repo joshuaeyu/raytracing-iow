@@ -13,13 +13,22 @@
 #include <glm/gtx/norm.hpp>
 #include <glm/gtc/constants.hpp>
 
-const float infinity = std::numeric_limits<float>::infinity();
+const double infinity = std::numeric_limits<double>::infinity();
+
+inline double random_double() {
+    static std::mt19937 generator;
+    static std::uniform_real_distribution<double> distribution(0.0, 1.0);
+    return distribution(generator);
+}
+
+inline double random_double(double min, double max) {
+    return min + (max - min) * random_double();
+}
 
 inline float random_float() {
     static std::mt19937 generator;
     static std::uniform_real_distribution<float> distribution(0.0, 1.0);
     return distribution(generator);
-    // return rand() / (RAND_MAX + 1.0);
 }
 
 inline float random_float(float min, float max) {

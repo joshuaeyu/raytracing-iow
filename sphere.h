@@ -7,11 +7,17 @@
 
 class sphere : public hittable {
     public:
-        sphere(const glm::vec3& center, float radius, std::shared_ptr<material> mat) : center(center), radius(fmax(0,radius)), mat(mat) {}
+        // Stationary
+        sphere(const glm::vec3& static_center, float radius, std::shared_ptr<material> mat)
+         : center(static_center, glm::vec3(0)), radius(std::fmax(0,radius)), mat(mat) {}
+        // Moving
+        sphere(const glm::vec3& center1, const glm::vec3& center2, float radius, std::shared_ptr<material> mat)
+         : center(center1, center2 - center1), radius(std::fmax(0,radius)), mat(mat) {}
 
         bool hit(const ray& r, interval ray_t, hit_record& rec) const override {
-            // Ray origin to sphere center vector
-            glm::vec3 oc = center - r.origin();
+            // Ray origin to current sphere center
+            glm::vec3 current_center = center.at(r.time());
+            glm::vec3 oc = current_center - r.origin();
             
             // Solve quadratic for values of t where sphere is hit by ray, within ray_tmin and ray_tmax.
                 // float a = glm::dot(r.direction(), r.direction());
@@ -43,12 +49,13 @@ class sphere : public hittable {
             rec.t = root;
             rec.p = r.at(root);
             rec.mat = mat;
-            rec.set_face_normal(r, (rec.p - center) / radius);
+            glm::vec3 outward_normal = (rec.p - current_center) / radius;
+            rec.set_face_normal(r, outward_normal);
             return true;
         }
 
     private:
-        glm::vec3 center;
+        ray center;
         float radius;
         std::shared_ptr<material> mat;
 };

@@ -16,7 +16,8 @@ class material {
 
 class lambertian : public material {    // Diffuse/matte material
     public:
-        lambertian(const glm::vec3& albedo) : albedo(albedo) {}
+        lambertian(const glm::vec3& albedo)
+         : albedo(albedo) {}
 
         bool scatter(const ray& r_in, const hit_record& rec, glm::vec3& attenuation, ray& scattered) const override {
             // Return attenuation and scattered ray through corresponding args
@@ -26,7 +27,7 @@ class lambertian : public material {    // Diffuse/matte material
                 scatter_direction = rec.normal;
             }
             
-            scattered = ray(rec.p, scatter_direction);
+            scattered = ray(rec.p, scatter_direction, r_in.time()); // Preserve time in scattered ray
             attenuation = albedo;
             return true;
         }
@@ -37,13 +38,14 @@ class lambertian : public material {    // Diffuse/matte material
 
 class metal : public material {
     public:
-        metal(const glm::vec3& albedo, float fuzz) : albedo(albedo), fuzz(fuzz) {}
+        metal(const glm::vec3& albedo, float fuzz)
+         : albedo(albedo), fuzz(fuzz) {}
 
         bool scatter(const ray& r_in, const hit_record& rec, glm::vec3& attenuation, ray& scattered) const override {
             // Return attenuation and scattered ray through corresponding args
             glm::vec3 reflect_direction = glm::reflect(r_in.direction(), rec.normal);
             reflect_direction = glm::normalize(reflect_direction) + fuzz*random_unit_vector();
-            scattered = ray(rec.p, reflect_direction);
+            scattered = ray(rec.p, reflect_direction, r_in.time()); // Preserve time in scattered ray
             attenuation = albedo;
             // Return only if ray is scattered away from surface   
             return (glm::dot(scattered.direction(), rec.normal) > 0);
@@ -56,7 +58,8 @@ class metal : public material {
 
 class dielectric : public material {
     public:
-        dielectric(float refraction_index) : refraction_index(refraction_index) {}
+        dielectric(float refraction_index)
+         : refraction_index(refraction_index) {}
 
         bool scatter(const ray& r_in, const hit_record& rec, glm::vec3& attenuation, ray& scattered) const override {
             // Set attenuation
@@ -77,7 +80,7 @@ class dielectric : public material {
             } else {
                 scatter_direction = glm::refract(unit_direction, rec.normal, ri);
             }
-            scattered = ray(rec.p, scatter_direction);
+            scattered = ray(rec.p, scatter_direction, r_in.time()); // Preserve time in scattered ray
             return true;
         }
 

@@ -35,7 +35,7 @@ class camera {
                     glm::vec3 pixel_color = glm::vec3(0);
                     // Antialiasing
                     for (int sample = 0; sample < samples_per_pixel; sample++) {
-                        ray r = get_ray_near(i,j);  // aims at viewport
+                        ray r = get_ray(i,j);  // aims at viewport
                         pixel_color += ray_color(r, max_depth, world);
                     }
                     // glm::vec3 pixel_center = pixel00_loc + (float(i) * pixel_delta_u) + (float(j) * pixel_delta_v);
@@ -72,9 +72,9 @@ class camera {
 
             // Viewport dimensions
             // float focal_length = glm::length(lookat - lookfrom);
-            float theta = glm::radians(vfov);
-            float h = glm::tan(theta/2);
-            float viewport_height = 2 * h * focus_dist;
+            float theta = glm::radians(vfov); // vfov in radians
+            float h = glm::tan(theta/2); // vfov in units
+            float viewport_height = 2 * h * focus_dist; // vfov scaled by focus_dist
             float viewport_width = viewport_height * (float(image_width)/float(image_height));
 
             // Orthonormal basis vectors
@@ -101,15 +101,18 @@ class camera {
             defocus_disk_v = v * defocus_radius;
         }
         
-        ray get_ray_near(int i, int j) const {
-            // Ray from camera_center to random point within (i,j)+/-(0.5,0.5)
+        ray get_ray(int i, int j) const {
+            // Ray 
+            // - From: Defocus disk surrounding camera_center
+            // - To: Random point near pixel (i, j) (within (i,j)±(0.5,0.5))
             glm::vec3 offset = sample_square();
             glm::vec3 pixel_sample = pixel00_loc + ((float(i) + offset.x) * pixel_delta_u) + ((float(j) + offset.y) * pixel_delta_v);
-            // glm::vec3 ray_origin = camera_center;
+            
             glm::vec3 ray_origin = (defocus_angle <= 0) ? camera_center : defocus_disk_sample();
             glm::vec3 ray_direction = pixel_sample - ray_origin;
+            double ray_time = random_double();
 
-            return ray(ray_origin, ray_direction);
+            return ray(ray_origin, ray_direction, ray_time);
         }
 
         glm::vec3 sample_square() const {
