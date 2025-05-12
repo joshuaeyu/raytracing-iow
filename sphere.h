@@ -59,9 +59,11 @@ class sphere : public hittable {
             // Update rec and return true
             rec.t = root;
             rec.p = r.at(root);
-            rec.mat = mat;
             glm::vec3 outward_normal = (rec.p - current_center) / radius;
             rec.set_face_normal(r, outward_normal);
+            get_sphere_uv(outward_normal, rec.u, rec.v);
+            rec.mat = mat;
+            
             return true;
         }
 
@@ -72,6 +74,16 @@ class sphere : public hittable {
         float radius;
         std::shared_ptr<material> mat;
         aabb bbox;
+
+        static void get_sphere_uv(const glm::vec3& p, double& u, double& v) {
+            // Converts a point p on the unit sphere to uv coordinates
+
+            double phi = std::atan2(-p.z, p.x) + pi;
+            double theta = std::acos(-p.y);
+
+            u = phi / (2 * pi);
+            v = theta / pi;
+        }
     };
 
 #endif

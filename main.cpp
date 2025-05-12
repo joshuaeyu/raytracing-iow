@@ -7,14 +7,13 @@
 #include "hittable_list.h"
 #include "sphere.h"
 
-#include <chrono>
-#include <iomanip>
-
-int main() {
+void bouncing_spheres() {
     hittable_list world;
 
     auto ground_material = std::make_shared<lambertian>(glm::vec3(0.5, 0.5, 0.5));
-    world.add(std::make_shared<sphere>(glm::vec3(0,-1000,0), 1000, ground_material));
+    auto checker_tex = std::make_shared<checker_texture>(0.32, glm::vec3(.2, .3, .1), glm::vec3(.9, .9, .9));
+    auto checker_material = std::make_shared<lambertian>(checker_tex);
+    world.add(std::make_shared<sphere>(glm::vec3(0,-1000,0), 1000, checker_material));
 
     for (int a = -11; a < 11; a++) {
         for (int b = -11; b < 11; b++) {
@@ -62,7 +61,7 @@ int main() {
     // RENDER SETTINGS
     cam.aspect_ratio      = 16.0 / 9.0;
     cam.image_width       = 400;
-    cam.samples_per_pixel = 50;
+    cam.samples_per_pixel = 30;
     cam.max_depth         = 10;
 
     cam.vfov     = 20;
@@ -73,15 +72,72 @@ int main() {
     cam.defocus_angle = 0.6;
     cam.focus_dist    = 10.0;
 
-    auto t0 = std::chrono::steady_clock::now();
     cam.render(world);
-    auto t1 = std::chrono::steady_clock::now();
-    std::chrono::duration<double, std::chrono::minutes::period> dur = t1 - t0;
-
-    std::clog << "Total render time: " << std::fixed << std::setprecision(3) << dur.count() << " min" << std::endl;
 }
 
 // For image_width = 400, samples_per_pixel = 50, max_depth = 10
     // Without BVH: 17.4 min
     // With BVH random axis split: 1.79 min
     // With BVH longest axis split: 1.79 min
+
+void checkered_spheres() {
+    hittable_list world;
+
+    auto checker_tex = std::make_shared<checker_texture>(0.32, glm::vec3(.2, .3, .1), glm::vec3(.9, .9, .9));
+    auto checker_material = std::make_shared<lambertian>(checker_tex);
+    world.add(std::make_shared<sphere>(glm::vec3(0,-10,0), 10, checker_material));
+    world.add(std::make_shared<sphere>(glm::vec3(0, 10,0), 10, checker_material));
+
+    camera cam;
+    
+    // RENDER SETTINGS
+    cam.aspect_ratio      = 16.0 / 9.0;
+    cam.image_width       = 400;
+    cam.samples_per_pixel = 30;
+    cam.max_depth         = 10;
+
+    cam.vfov     = 20;
+    cam.lookfrom = glm::vec3(13,2,3);
+    cam.lookat   = glm::vec3(0,0,0);
+    cam.vup      = glm::vec3(0,1,0);
+
+    cam.defocus_angle = 0;
+    // cam.defocus_angle = 0.6;
+    // cam.focus_dist    = 10.0;
+
+    cam.render(world);
+}
+
+void earth() {
+    auto earth_texture = std::make_shared<image_texture>("images/earthmap.jpg");
+    auto earth_material = std::make_shared<lambertian>(earth_texture);
+    
+    auto globe = std::make_shared<sphere>(glm::vec3(0,0,0), 2, earth_material);
+
+    camera cam;
+    
+    // RENDER SETTINGS
+    cam.aspect_ratio      = 16.0 / 9.0;
+    cam.image_width       = 400;
+    cam.samples_per_pixel = 30;
+    cam.max_depth         = 10;
+
+    cam.vfov     = 20;
+    cam.lookfrom = glm::vec3(13,2,3);
+    cam.lookat   = glm::vec3(0,0,0);
+    cam.vup      = glm::vec3(0,1,0);
+
+    cam.defocus_angle = 0;
+    // cam.defocus_angle = 0.6;
+    // cam.focus_dist    = 10.0;
+
+    cam.render(*globe);
+}
+
+int main() {
+    switch (3) {
+        case 1: bouncing_spheres(); break;
+        case 2: checkered_spheres(); break;
+        case 3: earth(); break;
+    }
+}

@@ -26,6 +26,8 @@ class camera {
         float focus_dist    = 3.4;
 
         void render(const hittable& world) {
+            auto t0 = std::chrono::steady_clock::now();
+            
             initialize();
             // Render
             std::cout << "P3\n" << image_width << ' ' << image_height << "\n255\n";
@@ -45,6 +47,10 @@ class camera {
                 }
             }
             std::clog << "\nDone!\n";
+
+            auto t1 = std::chrono::steady_clock::now();
+            std::chrono::duration<double, std::chrono::minutes::period> dur = t1 - t0;
+            std::clog << "Total render time: " << std::fixed << std::setprecision(3) << dur.count() << " min" << std::endl;
         }
 
     private:

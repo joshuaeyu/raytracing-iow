@@ -2,7 +2,9 @@
 #define RTWEEKEND_H
 
 // #include <cstdlib>
+#include <chrono>
 #include <cmath>
+#include <iomanip>
 #include <iostream>
 #include <limits>
 #include <memory>
@@ -14,6 +16,7 @@
 #include <glm/gtc/constants.hpp>
 
 const double infinity = std::numeric_limits<double>::infinity();
+const double pi = glm::pi<double>();
 
 inline double random_double() {
     static std::mt19937 generator;

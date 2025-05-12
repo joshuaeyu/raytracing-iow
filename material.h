@@ -2,6 +2,7 @@
 #define MATERIAL_H
 
 #include "rtweekend.h"
+#include "texture.h"
 
 class hit_record;
 
@@ -17,7 +18,10 @@ class material {
 class lambertian : public material {    // Diffuse/matte material
     public:
         lambertian(const glm::vec3& albedo)
-         : albedo(albedo) {}
+         : tex(std::make_shared<solid_color>(albedo)) {}
+        
+        lambertian(std::shared_ptr<texture> tex)
+         : tex(tex) {}
 
         bool scatter(const ray& r_in, const hit_record& rec, glm::vec3& attenuation, ray& scattered) const override {
             // Return attenuation and scattered ray through corresponding args
@@ -28,12 +32,13 @@ class lambertian : public material {    // Diffuse/matte material
             }
             
             scattered = ray(rec.p, scatter_direction, r_in.time()); // Preserve time in scattered ray
-            attenuation = albedo;
+            attenuation = tex->value(rec.u, rec.v, rec.p);
             return true;
         }
 
     private:
-        glm::vec3 albedo;   // Whiteness, or fractional reflectance
+        // glm::vec3 albedo;   // Whiteness, or fractional reflectance
+        std::shared_ptr<texture> tex;   // Whiteness, or fractional reflectance
 };
 
 class metal : public material {

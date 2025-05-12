@@ -10,7 +10,9 @@ class hit_record {
         glm::vec3 p;
         glm::vec3 normal;
         std::shared_ptr<material> mat;
-        float t;
+        double t;
+        double u;
+        double v;
         bool front_face;
 
         void set_face_normal(const ray& r, const glm::vec3& outward_normal) {
