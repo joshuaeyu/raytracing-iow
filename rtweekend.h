@@ -35,6 +35,16 @@ inline float random_float(float min, float max) {
     return min + (max - min) * random_float();
 }
 
+inline float random_int() {
+    static std::mt19937 generator;
+    static std::uniform_int_distribution<int> distribution(0, 1);
+    return distribution(generator);
+}
+
+inline float random_int(int min, int max) {
+    return min + (max - min) * random_int();
+}
+
 #include "color.h"
 #include "ray.h"
 #include "vec3.h"

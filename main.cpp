@@ -1,9 +1,14 @@
 #include "rtweekend.h"
+
+#include "bvh.h"
+#include "camera.h"
+#include "material.h"
 #include "hittable.h"
 #include "hittable_list.h"
 #include "sphere.h"
-#include "camera.h"
-#include "material.h"
+
+#include <chrono>
+#include <iomanip>
 
 int main() {
     hittable_list world;
@@ -50,13 +55,15 @@ int main() {
     auto material3 = std::make_shared<metal>(glm::vec3(0.7, 0.6, 0.5), 0.0);
     world.add(std::make_shared<sphere>(glm::vec3(4, 1, 0), 1.0, material3));
 
+    world = hittable_list(std::make_shared<bvh_node>(world)); // bvh_node wraps current hittables, making it optional
+
     camera cam;
 
     // RENDER SETTINGS
     cam.aspect_ratio      = 16.0 / 9.0;
-    cam.image_width       = 500;
-    cam.samples_per_pixel = 5;
-    cam.max_depth         = 5;
+    cam.image_width       = 400;
+    cam.samples_per_pixel = 50;
+    cam.max_depth         = 10;
 
     cam.vfov     = 20;
     cam.lookfrom = glm::vec3(13,2,3);
@@ -66,5 +73,15 @@ int main() {
     cam.defocus_angle = 0.6;
     cam.focus_dist    = 10.0;
 
+    auto t0 = std::chrono::steady_clock::now();
     cam.render(world);
+    auto t1 = std::chrono::steady_clock::now();
+    std::chrono::duration<double, std::chrono::minutes::period> dur = t1 - t0;
+
+    std::clog << "Total render time: " << std::fixed << std::setprecision(3) << dur.count() << " min" << std::endl;
 }
+
+// For image_width = 400, samples_per_pixel = 50, max_depth = 10
+    // Without BVH: 17.4 min
+    // With BVH random axis split: 1.79 min
+    // With BVH longest axis split: 1.79 min

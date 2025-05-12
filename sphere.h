@@ -3,16 +3,27 @@
 
 #include "rtweekend.h"
 
+#include "aabb.h"
 #include "hittable.h"
 
 class sphere : public hittable {
     public:
         // Stationary
         sphere(const glm::vec3& static_center, float radius, std::shared_ptr<material> mat)
-         : center(static_center, glm::vec3(0)), radius(std::fmax(0,radius)), mat(mat) {}
+         : center(static_center, glm::vec3(0)), radius(std::fmax(0,radius)), mat(mat) 
+        {
+            // glm::vec3 rvec(radius);
+            // bbox = aabb(static_center - rvec, static_center + rvec);
+            bbox = aabb(static_center - radius, static_center + radius);
+        }
         // Moving
         sphere(const glm::vec3& center1, const glm::vec3& center2, float radius, std::shared_ptr<material> mat)
-         : center(center1, center2 - center1), radius(std::fmax(0,radius)), mat(mat) {}
+         : center(center1, center2 - center1), radius(std::fmax(0,radius)), mat(mat) 
+        {
+            aabb box1(center1 - radius, center1 + radius);
+            aabb box2(center2 - radius, center2 + radius);
+            bbox = aabb(box1, box2);
+        }
 
         bool hit(const ray& r, interval ray_t, hit_record& rec) const override {
             // Ray origin to current sphere center
@@ -54,10 +65,13 @@ class sphere : public hittable {
             return true;
         }
 
+        aabb bounding_box() const override { return bbox; }
+
     private:
         ray center;
         float radius;
         std::shared_ptr<material> mat;
-};
+        aabb bbox;
+    };
 
 #endif
