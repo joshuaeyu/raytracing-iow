@@ -1,6 +1,7 @@
 #ifndef TEXTURE_H
 #define TEXTURE_H
 
+#include "perlin.h"
 #include "rtw_stb_image.h"
 
 #include <glm/glm.hpp>
@@ -77,6 +78,29 @@ class image_texture : public texture {
 
     private:
         rtw_image image;
+};
+
+class noise_texture : public texture {
+    public:
+        noise_texture(double scale) 
+         : scale(scale) {}
+        
+        glm::vec3 value(double u, double v, const glm::vec3& p) const override {
+            // Direct turbulence
+            // double noise_val = noise.turb(scale * glm::dvec3(p), 7);
+            
+            // Phased turbulence (marbling)
+            // - Color is proportional to a sine function
+            //   - Frequency: Scale * p.z
+            //   - Phase: 10 * noise.turb
+            double noise_val = 0.5 * (1.0 + std::sin(scale * p.z + 10 * noise.turb(p, 7)));
+            
+            return glm::vec3(noise_val);
+        }
+
+    private:
+        perlin noise;
+        double scale;
 };
 
 #endif

@@ -19,7 +19,7 @@ const double infinity = std::numeric_limits<double>::infinity();
 const double pi = glm::pi<double>();
 
 inline double random_double() {
-    static std::mt19937 generator;
+    static std::default_random_engine generator(1);
     static std::uniform_real_distribution<double> distribution(0.0, 1.0);
     return distribution(generator);
 }
@@ -29,7 +29,7 @@ inline double random_double(double min, double max) {
 }
 
 inline float random_float() {
-    static std::mt19937 generator;
+    static std::default_random_engine generator(2);
     static std::uniform_real_distribution<float> distribution(0.0, 1.0);
     return distribution(generator);
 }
@@ -38,14 +38,10 @@ inline float random_float(float min, float max) {
     return min + (max - min) * random_float();
 }
 
-inline float random_int() {
-    static std::mt19937 generator;
-    static std::uniform_int_distribution<int> distribution(0, 1);
-    return distribution(generator);
-}
-
 inline float random_int(int min, int max) {
-    return min + (max - min) * random_int();
+    static std::default_random_engine generator(4);
+    static std::uniform_int_distribution<int> distribution(min, max);
+    return distribution(generator);
 }
 
 #include "color.h"
