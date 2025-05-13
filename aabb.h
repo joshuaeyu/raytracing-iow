@@ -11,13 +11,18 @@ class aabb {
         aabb() {}
 
         aabb(const interval& x, const interval& y, const interval& z)
-         : x(x), y(y), z(z) {}
+         : x(x), y(y), z(z) 
+        {
+            pad_to_minimums();
+        }
 
         aabb(const glm::vec3& a, const glm::vec3& b) {
             // a and b are extrema (i.e., corners) of the bounding box
             x = (a.x <= b.x) ? interval(a.x, b.x) : interval(b.x, a.x);
             y = (a.y <= b.y) ? interval(a.y, b.y) : interval(b.y, a.y);
             z = (a.z <= b.z) ? interval(a.z, b.z) : interval(b.z, a.z);
+
+            pad_to_minimums();
         }
 
         aabb(const aabb& box0, const aabb& box1) {
@@ -70,6 +75,14 @@ class aabb {
         }
 
         static const aabb empty, universe;
+    
+    private:
+        void pad_to_minimums() {
+            double delta = 0.0001;
+            if (x.size() < delta) x = x.expand(delta);
+            if (y.size() < delta) y = y.expand(delta);
+            if (z.size() < delta) z = z.expand(delta);
+        }
 };
 
 const aabb aabb::empty = aabb(interval::empty, interval::empty, interval::empty);

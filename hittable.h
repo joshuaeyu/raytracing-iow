@@ -31,5 +31,4 @@ class hittable {
         virtual aabb bounding_box() const = 0;
 };
 
-
 #endif

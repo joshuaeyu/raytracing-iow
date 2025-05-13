@@ -6,6 +6,7 @@
 #include "hittable.h"
 #include "hittable_list.h"
 #include "sphere.h"
+#include "quad.h"
 
 void bouncing_spheres() {
     hittable_list world;
@@ -101,9 +102,7 @@ void checkered_spheres() {
     cam.lookat   = glm::vec3(0,0,0);
     cam.vup      = glm::vec3(0,1,0);
 
-    cam.defocus_angle = 0;
-    // cam.defocus_angle = 0.6;
-    // cam.focus_dist    = 10.0;
+    cam.defocus_angle = 0;;
 
     cam.render(world);
 }
@@ -128,8 +127,6 @@ void earth() {
     cam.vup      = glm::vec3(0,1,0);
 
     cam.defocus_angle = 0;
-    // cam.defocus_angle = 0.6;
-    // cam.focus_dist    = 10.0;
 
     cam.render(*globe);
 }
@@ -156,17 +153,50 @@ void perlin_spheres() {
     cam.vup      = glm::vec3(0,1,0);
 
     cam.defocus_angle = 0;
-    // cam.defocus_angle = 0.6;
-    // cam.focus_dist    = 10.0;
 
     cam.render(world); 
 }
 
+void quads() {
+    hittable_list world;
+
+    // Materials
+    auto left_red     = std::make_shared<lambertian>(glm::vec3(1.0, 0.2, 0.2));
+    auto back_green   = std::make_shared<lambertian>(glm::vec3(0.2, 1.0, 0.2));
+    auto right_blue   = std::make_shared<lambertian>(glm::vec3(0.2, 0.2, 1.0));
+    auto upper_orange = std::make_shared<lambertian>(glm::vec3(1.0, 0.5, 0.0));
+    auto lower_teal   = std::make_shared<lambertian>(glm::vec3(0.2, 0.8, 0.8));
+
+    // Quads
+    world.add(std::make_shared<quad>(glm::vec3(-3,-2, 5), glm::vec3(0, 0,-4), glm::vec3(0, 4, 0), left_red));
+    world.add(std::make_shared<quad>(glm::vec3(-2,-2, 0), glm::vec3(4, 0, 0), glm::vec3(0, 4, 0), back_green));
+    world.add(std::make_shared<quad>(glm::vec3( 3,-2, 1), glm::vec3(0, 0, 4), glm::vec3(0, 4, 0), right_blue));
+    world.add(std::make_shared<quad>(glm::vec3(-2, 3, 1), glm::vec3(4, 0, 0), glm::vec3(0, 0, 4), upper_orange));
+    world.add(std::make_shared<quad>(glm::vec3(-2,-3, 5), glm::vec3(4, 0, 0), glm::vec3(0, 0,-4), lower_teal));
+
+    camera cam;
+
+    cam.aspect_ratio      = 1.0;
+    cam.image_width       = 400;
+    cam.samples_per_pixel = 100;
+    cam.max_depth         = 50;
+
+    cam.vfov     = 80;
+    cam.lookfrom = glm::vec3(0,0,9);
+    cam.lookat   = glm::vec3(0,0,0);
+    cam.vup      = glm::vec3(0,1,0);
+
+    cam.defocus_angle = 0;
+
+    cam.render(world);
+}
+
 int main() {
-    switch (4) {
+    switch (5) {
         case 1: bouncing_spheres(); break;
         case 2: checkered_spheres(); break;
         case 3: earth(); break;
         case 4: perlin_spheres(); break;
+        case 5: quads(); break;
     }
 }
