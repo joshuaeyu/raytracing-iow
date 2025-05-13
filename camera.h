@@ -14,6 +14,7 @@ class camera {
         int image_width       = 100;
         int samples_per_pixel = 10;     // For antialiasing
         int max_depth         = 10;     // Ray bounce limit
+        glm::vec3 background;           // Scene background color
         float acne_bound      = 0.001;  // For shadow acne fixing
 
         float vfov = 90;    // Vertical field of view, entire span
@@ -65,7 +66,6 @@ class camera {
         
         glm::vec3 defocus_disk_u;
         glm::vec3 defocus_disk_v;
-
 
         void initialize() {
             // Image dimensions
@@ -141,27 +141,27 @@ class camera {
             if (depth <= 0)
                 return glm::vec3(0,0,0);
             
-            // Color of closest hittable that ray hits in world
-            // world.hit returns rec of closest hit, based on current ray.
-            // Set interval lower bound to 0.01 to prevent shadow acne!
+            // Get closest hit record
             hit_record rec;
-            if (world.hit(r, interval(acne_bound,infinity), rec)) {
-                ray scattered;
-                glm::vec3 attenuation;
-                if (rec.mat->scatter(r, rec, attenuation, scattered))
-                    return attenuation * ray_color(scattered, depth-1, world);
-                return glm::vec3(0);
-
-                // glm::vec3 direction = rec.normal + random_unit_vector();    // Lambertian distribution
-                // glm::vec3 direction = random_on_hemisphere(rec.normal);  // Random scattering about the hemisphere
-                // return 0.4f * ray_color(ray(rec.p, direction), depth-1, world);    // Recurses until base case is reached. Either max depth is reached, or no hittables are hit.
-                // return 0.5f * (rec.normal + glm::vec3(1));
+            if (!world.hit(r, interval(acne_bound,infinity), rec)) {
+                return background;
+                // // Gradient
+                // glm::vec3 unit_direction = glm::normalize(r.direction());
+                // float a = 0.5f*(unit_direction.y + 1.0f);   // take [-1,1] to [0,1]
+                // return (1-a)*glm::vec3(1,1,1) + a*glm::vec3(0.5,0.7,1);
             }
 
-            // Or, color of background if no hittable is hit
-            glm::vec3 unit_direction = glm::normalize(r.direction());
-            float a = 0.5f*(unit_direction.y + 1.0f);   // take [-1,1] to [0,1]
-            return (1-a)*glm::vec3(1,1,1) + a*glm::vec3(0.5,0.7,1);
+            // Return emission if material doesn't scatter this ray
+            ray scattered;
+            glm::vec3 attenuation;
+            glm::vec3 color_from_emission = rec.mat->emitted(rec.u, rec.v, rec.p);
+            if (!rec.mat->scatter(r, rec, attenuation, scattered))
+                return color_from_emission;
+                
+            // Get color of incoming ray which we are tracing backward, and attenuate it based on scatter properties
+            glm::vec3 color_from_scatter = attenuation * ray_color(scattered, depth-1, world);
+            
+            return color_from_emission + color_from_scatter;
         }
 };
 

@@ -64,6 +64,7 @@ void bouncing_spheres() {
     cam.image_width       = 400;
     cam.samples_per_pixel = 30;
     cam.max_depth         = 10;
+    cam.background        = glm::vec3(0.70, 0.80, 1.00);
 
     cam.vfov     = 20;
     cam.lookfrom = glm::vec3(13,2,3);
@@ -96,6 +97,7 @@ void checkered_spheres() {
     cam.image_width       = 400;
     cam.samples_per_pixel = 30;
     cam.max_depth         = 10;
+    cam.background        = glm::vec3(0.70, 0.80, 1.00);
 
     cam.vfov     = 20;
     cam.lookfrom = glm::vec3(13,2,3);
@@ -120,6 +122,7 @@ void earth() {
     cam.image_width       = 400;
     cam.samples_per_pixel = 30;
     cam.max_depth         = 10;
+    cam.background        = glm::vec3(0.70, 0.80, 1.00);
 
     cam.vfov     = 20;
     cam.lookfrom = glm::vec3(13,2,3);
@@ -146,6 +149,7 @@ void perlin_spheres() {
     cam.image_width       = 400;
     cam.samples_per_pixel = 30;
     cam.max_depth         = 10;
+    cam.background        = glm::vec3(0.70, 0.80, 1.00);
 
     cam.vfov     = 20;
     cam.lookfrom = glm::vec3(13,2,3);
@@ -180,6 +184,7 @@ void quads() {
     cam.image_width       = 400;
     cam.samples_per_pixel = 100;
     cam.max_depth         = 50;
+    cam.background        = glm::vec3(0.70, 0.80, 1.00);
 
     cam.vfov     = 80;
     cam.lookfrom = glm::vec3(0,0,9);
@@ -191,12 +196,77 @@ void quads() {
     cam.render(world);
 }
 
+void simple_light() {
+    hittable_list world;
+
+    auto perlin_texture = std::make_shared<noise_texture>(4);
+    auto perlin_material = std::make_shared<lambertian>(perlin_texture);
+    world.add(std::make_shared<sphere>(glm::vec3(0,-1000,0), 1000, perlin_material));
+    world.add(std::make_shared<sphere>(glm::vec3(0,2,0), 2, perlin_material));
+
+    auto diff_light = std::make_shared<diffuse_light>(glm::vec3(5));
+    world.add(std::make_shared<sphere>(glm::vec3(2,5,2), 0.5, diff_light));
+    world.add(std::make_shared<quad>(glm::vec3(3,1,-2), glm::vec3(2,0,0), glm::vec3(0,2,0), diff_light));
+
+    camera cam;
+
+    cam.aspect_ratio      = 16.0 / 9.0;
+    cam.image_width       = 400;
+    cam.samples_per_pixel = 100;
+    cam.max_depth         = 50;
+    cam.background        = glm::vec3(0,0,0);
+
+    cam.vfov     = 20;
+    cam.lookfrom = glm::vec3(26,3,6);
+    cam.lookat   = glm::vec3(0,2,0);
+    cam.vup      = glm::vec3(0,1,0);
+
+    cam.defocus_angle = 0;
+
+    cam.render(world);
+}
+
+void cornell_box() {
+    hittable_list world;
+
+    auto red   = std::make_shared<lambertian>(glm::vec3(.65, .05, .05));
+    auto white = std::make_shared<lambertian>(glm::vec3(.73, .73, .73));
+    auto green = std::make_shared<lambertian>(glm::vec3(.12, .45, .15));
+    auto light = std::make_shared<diffuse_light>(glm::vec3(15, 15, 15));
+
+    world.add(std::make_shared<quad>(glm::vec3(555,0,0), glm::vec3(0,555,0), glm::vec3(0,0,555), green));
+    world.add(std::make_shared<quad>(glm::vec3(0,0,0), glm::vec3(0,555,0), glm::vec3(0,0,555), red));
+    world.add(std::make_shared<quad>(glm::vec3(343, 554, 332), glm::vec3(-130,0,0), glm::vec3(0,0,-105), light));
+    world.add(std::make_shared<quad>(glm::vec3(0,0,0), glm::vec3(555,0,0), glm::vec3(0,0,555), white));
+    world.add(std::make_shared<quad>(glm::vec3(555,555,555), glm::vec3(-555,0,0), glm::vec3(0,0,-555), white));
+    world.add(std::make_shared<quad>(glm::vec3(0,0,555), glm::vec3(555,0,0), glm::vec3(0,555,0), white));
+
+    camera cam;
+
+    cam.aspect_ratio      = 1.0;
+    cam.image_width       = 600;
+    cam.samples_per_pixel = 200;
+    cam.max_depth         = 50;
+    cam.background        = glm::vec3(0,0,0);
+
+    cam.vfov     = 40;
+    cam.lookfrom = glm::vec3(278, 278, -800);
+    cam.lookat   = glm::vec3(278, 278, 0);
+    cam.vup      = glm::vec3(0,1,0);
+
+    cam.defocus_angle = 0;
+
+    cam.render(world);
+}
+
 int main() {
-    switch (5) {
+    switch (7) {
         case 1: bouncing_spheres(); break;
         case 2: checkered_spheres(); break;
         case 3: earth(); break;
         case 4: perlin_spheres(); break;
         case 5: quads(); break;
+        case 6: simple_light(); break;
+        case 7: cornell_box(); break;
     }
 }

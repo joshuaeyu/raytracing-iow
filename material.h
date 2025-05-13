@@ -10,6 +10,10 @@ class material {
     public:
         virtual ~material() = default;
 
+        virtual glm::vec3 emitted(double u, double v, const glm::vec3& p) const {
+            return glm::vec3(0);
+        }
+
         virtual bool scatter(const ray& r_in, const hit_record& rec, glm::vec3& attenuation, ray& scattered) const {
             return false;
         }
@@ -98,6 +102,22 @@ class dielectric : public material {
             r0 = r0*r0;
             return r0 + (1.0f-r0)*glm::pow((1.0f-cosine),5);
         }
+};
+
+class diffuse_light : public material {
+    public:
+        diffuse_light(std::shared_ptr<texture> tex) 
+         : tex(tex) {}
+        
+        diffuse_light(const glm::vec3& emit)
+         : tex(std::make_shared<solid_color>(emit)) {}
+
+        glm::vec3 emitted(double u, double v, const glm::vec3& p) const override {
+            return tex->value(u, v, p);
+        }
+
+    private:
+        std::shared_ptr<texture> tex;
 };
 
 #endif
