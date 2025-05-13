@@ -241,12 +241,22 @@ void cornell_box() {
     world.add(std::make_shared<quad>(glm::vec3(555,555,555), glm::vec3(-555,0,0), glm::vec3(0,0,-555), white));
     world.add(std::make_shared<quad>(glm::vec3(0,0,555), glm::vec3(555,0,0), glm::vec3(0,555,0), white));
 
+    std::shared_ptr<hittable> box1 = box(glm::vec3(0,0,0), glm::vec3(165,330,165), white);
+    box1 = std::make_shared<rotate_y>(box1, 15);
+    box1 = std::make_shared<translate>(box1, glm::vec3(265,0,295));
+    world.add(box1);
+
+    std::shared_ptr<hittable> box2 = box(glm::vec3(0,0,0), glm::vec3(165,165,165), white);
+    box2 = std::make_shared<rotate_y>(box2, -18);
+    box2 = std::make_shared<translate>(box2, glm::vec3(130,0,65));
+    world.add(box2);
+
     camera cam;
 
     cam.aspect_ratio      = 1.0;
     cam.image_width       = 600;
-    cam.samples_per_pixel = 200;
-    cam.max_depth         = 50;
+    cam.samples_per_pixel = 100;
+    cam.max_depth         = 20;
     cam.background        = glm::vec3(0,0,0);
 
     cam.vfov     = 40;
