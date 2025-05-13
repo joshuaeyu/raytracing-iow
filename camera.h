@@ -8,7 +8,6 @@
 #include "material.h"
 
 class camera {
-
     public:
         float aspect_ratio    = 1.0;
         int image_width       = 100;
@@ -30,20 +29,18 @@ class camera {
             auto t0 = std::chrono::steady_clock::now();
             
             initialize();
+            
             // Render
             std::cout << "P3\n" << image_width << ' ' << image_height << "\n255\n";
             for (int j = 0; j < image_height; j++) {
                 std::clog << "\rScanlines remaining: " << image_height-j-1 << ' ' << std::flush;
                 for (int i = 0; i < image_width; i++) {
-                    glm::vec3 pixel_color = glm::vec3(0);
-                    // Antialiasing
+                    glm::vec3 pixel_color(0);
+                    // Perform antialiasing by taking multiple, slightly offset samples per pixel
                     for (int sample = 0; sample < samples_per_pixel; sample++) {
                         ray r = get_ray(i,j);  // aims at viewport
                         pixel_color += ray_color(r, max_depth, world);
                     }
-                    // glm::vec3 pixel_center = pixel00_loc + (float(i) * pixel_delta_u) + (float(j) * pixel_delta_v);
-                    // glm::vec3 ray_direction = pixel_center - camera_center;
-                    // ray r(camera_center, ray_direction);
                     write_color(std::cout, pixel_color * pixel_samples_scale);
                 }
             }
@@ -79,9 +76,9 @@ class camera {
             // Viewport dimensions
             // float focal_length = glm::length(lookat - lookfrom);
             float theta = glm::radians(vfov); // vfov in radians
-            float h = glm::tan(theta/2); // vfov in units
+            float h = std::tan(theta/2); // vfov in units
             float viewport_height = 2 * h * focus_dist; // vfov scaled by focus_dist
-            float viewport_width = viewport_height * (float(image_width)/float(image_height));
+            float viewport_width = viewport_height * (float(image_width)/image_height);
 
             // Orthonormal basis vectors
             w = glm::normalize(lookfrom - lookat);
@@ -102,13 +99,12 @@ class camera {
             pixel00_loc = viewport_upper_left + 0.5f * (pixel_delta_u + pixel_delta_v);
 
             // Camera defocus disk basis vectors
-            float defocus_radius = glm::tan(glm::radians(defocus_angle/2)) * focus_dist;
+            float defocus_radius = focus_dist * std::tan(glm::radians(defocus_angle/2));
             defocus_disk_u = u * defocus_radius;
             defocus_disk_v = v * defocus_radius;
         }
         
         ray get_ray(int i, int j) const {
-            // Ray 
             // - From: Defocus disk surrounding camera_center
             // - To: Random point near pixel (i, j) (within (i,j)±(0.5,0.5))
             glm::vec3 offset = sample_square();
@@ -127,9 +123,7 @@ class camera {
         }
 
         glm::vec3 sample_disk() const {
-            float x = glm::cos( glm::two_pi<float>() * random_float() ) - 0.5f;
-            float y = glm::sin( glm::two_pi<float>() * random_float() ) - 0.5f;
-            return glm::vec3(x, y, 0);
+            return random_in_unit_disk();
         }
 
         glm::vec3 defocus_disk_sample() const {

@@ -11,10 +11,14 @@ const bool near_zero(const glm::vec3& v) {
 
 inline glm::vec3 random_unit_vector() {
     while (true) {
-        glm::vec3 p = glm::vec3(random_float(-1,1), random_float(-1,1), random_float(-1,1));
+        glm::vec3 p(random_float(-1,1), random_float(-1,1), random_float(-1,1));
         if (glm::length2(p) < 1)
             return glm::normalize(p);
     }
+}
+
+inline glm::vec3 random_vector(float min, float max) {
+    return glm::vec3(random_float(min,max), random_float(min,max), random_float(min,max));
 }
 
 inline glm::vec3 random_on_hemisphere(const glm::vec3& normal) {
@@ -27,7 +31,7 @@ inline glm::vec3 random_on_hemisphere(const glm::vec3& normal) {
 
 inline glm::vec3 random_in_unit_disk() {
     while (true) {
-        glm::vec3 p = glm::vec3(random_float(-1,1), random_float(-1,1), 0);
+        glm::vec3 p(random_float(-1,1), random_float(-1,1), 0);
         if (glm::length2(p) < 1)
             return p;
     }

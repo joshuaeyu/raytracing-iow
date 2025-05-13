@@ -1,8 +1,8 @@
 #ifndef COLOR_H
 #define COLOR_H
 
-// #include "rtweekend.h"
 #include "interval.h"
+
 #include <glm/glm.hpp>
 
 inline float linear_to_gamma(float linear_component) {
@@ -26,9 +26,9 @@ void write_color(std::ostream& out, const glm::vec3& pixel_color) {
 
     // Map [0,1] to [0,255]
     static const interval intensity(0.000f, 0.999f);
-    int rbyte = 255.999 * intensity.clamp(r);
-    int gbyte = 255.999 * intensity.clamp(g);
-    int bbyte = 255.999 * intensity.clamp(b);
+    int rbyte = 256 * intensity.clamp(r);
+    int gbyte = 256 * intensity.clamp(g);
+    int bbyte = 256 * intensity.clamp(b);
 
     out << rbyte << ' ' << gbyte << ' ' << bbyte << std::endl;
 }

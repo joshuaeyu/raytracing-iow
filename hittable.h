@@ -2,6 +2,7 @@
 #define HITTABLE_H
 
 #include "rtweekend.h"
+#include "aabb.h"
 
 class material;
 
@@ -53,7 +54,7 @@ class translate : public hittable {
             return true;
         }
         
-        virtual aabb bounding_box() const override { return bbox; }
+        aabb bounding_box() const override { return bbox; }
     
     private:
         std::shared_ptr<hittable> object;
@@ -129,7 +130,7 @@ class rotate_y : public hittable {
             return true;
         }
         
-        virtual aabb bounding_box() const override { return bbox; }
+        aabb bounding_box() const override { return bbox; }
     
     private:
         std::shared_ptr<hittable> object;

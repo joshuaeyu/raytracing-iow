@@ -2,6 +2,7 @@
 
 #include "bvh.h"
 #include "camera.h"
+#include "constant_medium.h"
 #include "material.h"
 #include "hittable.h"
 #include "hittable_list.h"
@@ -255,7 +256,51 @@ void cornell_box() {
 
     cam.aspect_ratio      = 1.0;
     cam.image_width       = 600;
-    cam.samples_per_pixel = 100;
+    cam.samples_per_pixel = 50;
+    cam.max_depth         = 10;
+    cam.background        = glm::vec3(0,0,0);
+
+    cam.vfov     = 40;
+    cam.lookfrom = glm::vec3(278, 278, -800);
+    cam.lookat   = glm::vec3(278, 278, 0);
+    cam.vup      = glm::vec3(0,1,0);
+
+    cam.defocus_angle = 0;
+
+    cam.render(world);
+}
+
+void cornell_smoke() {
+    hittable_list world;
+
+    auto red   = std::make_shared<lambertian>(glm::vec3(.65, .05, .05));
+    auto white = std::make_shared<lambertian>(glm::vec3(.73, .73, .73));
+    auto green = std::make_shared<lambertian>(glm::vec3(.12, .45, .15));
+    auto light = std::make_shared<diffuse_light>(glm::vec3(7, 7, 7));
+
+    world.add(std::make_shared<quad>(glm::vec3(555,0,0), glm::vec3(0,555,0), glm::vec3(0,0,555), green));
+    world.add(std::make_shared<quad>(glm::vec3(0,0,0), glm::vec3(0,555,0), glm::vec3(0,0,555), red));
+    world.add(std::make_shared<quad>(glm::vec3(113,554,127), glm::vec3(330,0,0), glm::vec3(0,0,305), light));
+    world.add(std::make_shared<quad>(glm::vec3(0,555,0), glm::vec3(555,0,0), glm::vec3(0,0,555), white));
+    world.add(std::make_shared<quad>(glm::vec3(0,0,0), glm::vec3(555,0,0), glm::vec3(0,0,555), white));
+    world.add(std::make_shared<quad>(glm::vec3(0,0,555), glm::vec3(555,0,0), glm::vec3(0,555,0), white));
+
+    std::shared_ptr<hittable> box1 = box(glm::vec3(0,0,0), glm::vec3(165,330,165), white);
+    box1 = std::make_shared<rotate_y>(box1, 15);
+    box1 = std::make_shared<translate>(box1, glm::vec3(265,0,295));
+
+    std::shared_ptr<hittable> box2 = box(glm::vec3(0,0,0), glm::vec3(165,165,165), white);
+    box2 = std::make_shared<rotate_y>(box2, -18);
+    box2 = std::make_shared<translate>(box2, glm::vec3(130,0,65));
+
+    world.add(std::make_shared<constant_medium>(box1, 0.01, glm::vec3(0,0,0)));
+    world.add(std::make_shared<constant_medium>(box2, 0.01, glm::vec3(1,1,1)));
+
+    camera cam;
+
+    cam.aspect_ratio      = 1.0;
+    cam.image_width       = 600;
+    cam.samples_per_pixel = 50;
     cam.max_depth         = 20;
     cam.background        = glm::vec3(0,0,0);
 
@@ -269,14 +314,102 @@ void cornell_box() {
     cam.render(world);
 }
 
+void final_scene(int image_width, int samples_per_pixel, int max_depth) {
+    hittable_list world;
+    
+    // Mint green cubes at varying heights
+    hittable_list boxes1;
+    auto ground = std::make_shared<lambertian>(glm::vec3(0.48, 0.83, 0.53));
+    int boxes_per_side = 20;
+    for (int i = 0; i < boxes_per_side; i++) {
+        for (int j = 0; j < boxes_per_side; j++) {
+            auto w = 100.0;
+            auto x0 = -1000.0 + i*w;
+            auto z0 = -1000.0 + j*w;
+            auto y0 = 0.0;
+            auto x1 = x0 + w;
+            auto y1 = random_double(1,101);
+            auto z1 = z0 + w;
+
+            boxes1.add(box(glm::vec3(x0,y0,z0), glm::vec3(x1,y1,z1), ground));
+        }
+    }
+    world.add(std::make_shared<bvh_node>(boxes1));
+
+    // Diffuse white light quad
+    auto light = std::make_shared<diffuse_light>(glm::vec3(7, 7, 7));
+    world.add(std::make_shared<quad>(glm::vec3(123,554,147), glm::vec3(300,0,0), glm::vec3(0,0,265), light));
+
+    // Orange sphere with motion blur
+    auto center1 = glm::vec3(400, 400, 200);
+    auto center2 = center1 + glm::vec3(30,0,0);
+    auto sphere_material = std::make_shared<lambertian>(glm::vec3(0.7, 0.3, 0.1));
+    world.add(std::make_shared<sphere>(center1, center2, 50, sphere_material));
+
+    // Glass sphere
+    world.add(std::make_shared<sphere>(glm::vec3(260, 150, 45), 50, std::make_shared<dielectric>(1.5)));
+    
+    // Metal sphere
+    world.add(std::make_shared<sphere>(
+        glm::vec3(0, 150, 145), 50, std::make_shared<metal>(glm::vec3(0.8, 0.8, 0.9), 1.0)
+    ));
+
+    // Blue subsurface reflection sphere
+    auto boundary = std::make_shared<sphere>(glm::vec3(360,150,145), 70, std::make_shared<dielectric>(1.5));
+    world.add(boundary);
+    world.add(std::make_shared<constant_medium>(boundary, 0.2, glm::vec3(0.2, 0.4, 0.9)));
+    boundary = std::make_shared<sphere>(glm::vec3(0,0,0), 5000, std::make_shared<dielectric>(1.5));
+    world.add(std::make_shared<constant_medium>(boundary, .0001, glm::vec3(1,1,1)));
+
+    // Globe
+    auto emat = std::make_shared<lambertian>(std::make_shared<image_texture>("images/earthmap.jpg"));
+    world.add(std::make_shared<sphere>(glm::vec3(400,200,400), 100, emat));
+    auto pertext = std::make_shared<noise_texture>(0.2);
+    world.add(std::make_shared<sphere>(glm::vec3(220,280,300), 80, std::make_shared<lambertian>(pertext)));
+
+    // Random white spheres enclosed in an (imaginary) rotated cube
+    hittable_list boxes2;
+    auto white = std::make_shared<lambertian>(glm::vec3(.73, .73, .73));
+    int ns = 1000;
+    for (int j = 0; j < ns; j++) {
+        boxes2.add(std::make_shared<sphere>(random_vector(0,165), 10, white));
+    }
+    world.add(std::make_shared<translate>(
+        std::make_shared<rotate_y>(
+            std::make_shared<bvh_node>(boxes2), 15),
+            glm::vec3(-100,270,395)
+        )
+    );
+
+    camera cam;
+
+    cam.aspect_ratio      = 1.0;
+    cam.image_width       = image_width;
+    cam.samples_per_pixel = samples_per_pixel;
+    cam.max_depth         = max_depth;
+    cam.background        = glm::vec3(0,0,0);
+
+    cam.vfov     = 40;
+    cam.lookfrom = glm::vec3(478, 278, -600);
+    cam.lookat   = glm::vec3(278, 278, 0);
+    cam.vup      = glm::vec3(0,1,0);
+
+    cam.defocus_angle = 0;
+
+    cam.render(world);
+}
+
 int main() {
-    switch (7) {
-        case 1: bouncing_spheres(); break;
-        case 2: checkered_spheres(); break;
-        case 3: earth(); break;
-        case 4: perlin_spheres(); break;
-        case 5: quads(); break;
-        case 6: simple_light(); break;
-        case 7: cornell_box(); break;
+    switch (9) {
+        case 1:  bouncing_spheres();          break;
+        case 2:  checkered_spheres();         break;
+        case 3:  earth();                     break;
+        case 4:  perlin_spheres();            break;
+        case 5:  quads();                     break;
+        case 6:  simple_light();              break;
+        case 7:  cornell_box();               break;
+        case 8:  cornell_smoke();             break;
+        case 9:  final_scene(800, 10000, 40); break;
+        default: final_scene(400,   200, 10); break;
     }
 }

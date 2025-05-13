@@ -1,8 +1,8 @@
 #ifndef QUAD_H
 #define QUAD_H
 
-#include "aabb.h"
 #include "hittable.h"
+#include "hittable_list.h"
 
 class quad : public hittable {
     public:

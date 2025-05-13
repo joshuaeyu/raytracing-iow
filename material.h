@@ -28,12 +28,11 @@ class lambertian : public material {    // Diffuse/matte material
          : tex(tex) {}
 
         bool scatter(const ray& r_in, const hit_record& rec, glm::vec3& attenuation, ray& scattered) const override {
-            // Return attenuation and scattered ray through corresponding args
+            // Scatter in a random direction toward the normal
             glm::vec3 scatter_direction = rec.normal + random_unit_vector();
             
-            if (near_zero(scatter_direction)) {
+            if (near_zero(scatter_direction))
                 scatter_direction = rec.normal;
-            }
             
             scattered = ray(rec.p, scatter_direction, r_in.time()); // Preserve time in scattered ray
             attenuation = tex->value(rec.u, rec.v, rec.p);
@@ -116,6 +115,25 @@ class diffuse_light : public material {
             return tex->value(u, v, p);
         }
 
+    private:
+        std::shared_ptr<texture> tex;
+};
+
+class isotropic : public material {
+    public:
+        isotropic(const glm::vec3& albedo)
+         : tex(std::make_shared<solid_color>(albedo)) {}
+        
+        isotropic(std::shared_ptr<texture> tex)
+         : tex(tex) {}
+
+        bool scatter(const ray& r_in, const hit_record& rec, glm::vec3& attenuation, ray& scattered) const override {
+            // Scatter in a random unit direction independent of the object
+            scattered = ray(rec.p, random_unit_vector(), r_in.time());
+            attenuation = tex->value(rec.u, rec.v, rec.p);
+            return true;
+        }
+    
     private:
         std::shared_ptr<texture> tex;
 };
