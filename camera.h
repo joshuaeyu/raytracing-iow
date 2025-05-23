@@ -6,6 +6,7 @@
 #include "hittable.h"
 #include "hittable_list.h"
 #include "material.h"
+#include "pdf.h"
 
 class camera {
     public:
@@ -25,7 +26,7 @@ class camera {
         float defocus_angle = 10.0;    // Cone angle, entire span
         float focus_dist    = 3.4;
 
-        void render(const hittable& world) {
+        void render(const hittable& world, const hittable& lights) {
             auto t0 = std::chrono::steady_clock::now();
             
             initialize();
@@ -39,7 +40,7 @@ class camera {
                     // Perform antialiasing by taking multiple, slightly offset samples per pixel
                     for (int sample = 0; sample < samples_per_pixel; sample++) {
                         ray r = get_ray(i,j);  // aims at viewport
-                        pixel_color += ray_color(r, max_depth, world);
+                        pixel_color += ray_color(r, max_depth, world, lights);
                     }
                     write_color(std::cout, pixel_color * pixel_samples_scale);
                 }
@@ -131,13 +132,13 @@ class camera {
             return camera_center + p.x*defocus_disk_u + p.y*defocus_disk_v;
         }
         
-        glm::vec3 ray_color(const ray& r, int depth, const hittable& world) const {
+        glm::vec3 ray_color(const ray& r, int depth, const hittable& world, const hittable& lights) const {
             if (depth <= 0)
                 return glm::vec3(0,0,0);
             
             // Get closest hit record
             hit_record rec;
-            if (!world.hit(r, interval(acne_bound,infinity), rec)) {
+            if (!world.hit(r, interval(acne_bound, infinity), rec)) {
                 return background;
                 // // Gradient
                 // glm::vec3 unit_direction = glm::normalize(r.direction());
@@ -145,15 +146,31 @@ class camera {
                 // return (1-a)*glm::vec3(1,1,1) + a*glm::vec3(0.5,0.7,1);
             }
 
+            scatter_record srec;
+            glm::vec3 color_from_emission = rec.mat->emitted(r, rec, rec.u, rec.v, rec.p);
+            
             // Return emission if material doesn't scatter this ray
-            ray scattered;
-            glm::vec3 attenuation;
-            glm::vec3 color_from_emission = rec.mat->emitted(rec.u, rec.v, rec.p);
-            if (!rec.mat->scatter(r, rec, attenuation, scattered))
+            if (!rec.mat->scatter(r, rec, srec))
                 return color_from_emission;
+            
+            // If material is specular (i.e., PDF scattering doesn't make sense), return attenuated skip_pdf_ray
+            if (srec.skip_pdf)
+                return srec.attenuation * ray_color(srec.skip_pdf_ray, depth-1, world, lights);
+            
+            // Mix PDFs of lights (steer towards lights) and the material (surface properties)
+            std::shared_ptr<hittable_pdf> lights_pdf = std::make_shared<hittable_pdf>(lights, rec.p);
+            mixture_pdf mixed_pdf(lights_pdf, srec.pdf_ptr);
                 
-            // Get color of incoming ray which we are tracing backward, and attenuate it based on scatter properties
-            glm::vec3 color_from_scatter = attenuation * ray_color(scattered, depth-1, world);
+            // Generate (sample) a ray based on the mixed PDF and compute its PDF value
+            ray scattered = ray(rec.p, mixed_pdf.generate(), r.time());
+            double pdf_value = mixed_pdf.value(scattered.direction());
+
+            // pScatter as defined by the material
+            double scattering_pdf = rec.mat->scattering_pdf(r, rec, scattered);
+
+            // Get color of incoming ray which we are tracing backward, attenuate it based on scatter properties, multiply by the material's scattering PDF, and normalize (weight) by the importance sampling PDF
+            glm::vec3 sample_color = ray_color(scattered, depth-1, world, lights);
+            glm::vec3 color_from_scatter = (srec.attenuation * (float)scattering_pdf * sample_color) / (float)pdf_value;
             
             return color_from_emission + color_from_scatter;
         }

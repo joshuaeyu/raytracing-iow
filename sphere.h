@@ -69,6 +69,27 @@ class sphere : public hittable {
 
         aabb bounding_box() const override { return bbox; }
 
+        double pdf_value(const glm::vec3& origin, const glm::vec3& direction) const override {
+            hit_record rec;
+            if (!hit(ray(origin, direction), interval(0.001, infinity), rec))
+                return 0;
+
+            // Compute solid angle of the sphere that corresponds to the sampling cone
+            double dist_squared = glm::distance2(center.at(0), origin);
+            double cos_theta_max = std::sqrt(1 - radius*radius / dist_squared);
+            double solid_angle = 2 * pi * (1 - cos_theta_max);
+
+            // PDF is uniform over the cone
+            return 1 / solid_angle;
+        }
+
+        glm::vec3 random(const glm::vec3& origin) const override {
+            glm::vec3 direction = center.at(0) - origin;
+            double dist_squared = glm::length2(direction);
+            onb uvw(direction); // Transform such that z-axis in object space becomes direction vector in world space
+            return uvw.transform(random_to_sphere(radius, dist_squared));
+        }
+
     private:
         ray center;
         float radius;
@@ -83,6 +104,25 @@ class sphere : public hittable {
 
             u = phi / (2 * pi);
             v = theta / pi;
+        }
+
+        static glm::vec3 random_to_sphere(double radius, double distance_squared) {
+            // In object space 
+            // Assume origin at 0,0,0 and sphere center at 0,0,d
+            // Return vector from origin to a random point on the side of the sphere facing the origin, i.e., the -z side of the sphere
+            
+            // radius and distance_squared are only used to compute theta_max!
+            double cos_theta_max = std::sqrt(1 - radius*radius / distance_squared);
+
+            double r1 = random_double();
+            double r2 = random_double();
+
+            double z = 1 + r2 * (cos_theta_max - 1);
+            double phi = 2 * pi * r1;
+            double x = std::cos(phi) * std::sqrt(1 - z*z);
+            double y = std::sin(phi) * std::sqrt(1 - z*z);
+
+            return glm::vec3(x, y, z);
         }
     };
 

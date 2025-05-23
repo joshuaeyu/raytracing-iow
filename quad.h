@@ -14,6 +14,8 @@ class quad : public hittable {
             D = glm::dot(normal, Q);
             w = n / glm::dot(n, n);
             
+            area = glm::length(n);
+
             set_bounding_box();
         }
 
@@ -65,7 +67,27 @@ class quad : public hittable {
 
             return true;
         }
-        
+
+        double pdf_value(const glm::vec3& origin, const glm::vec3& direction) const override {
+            // Get intersection of ray with quad
+            hit_record rec;
+            if (!hit(ray(origin, direction), interval(0.001, infinity), rec))
+                return 0;
+            
+            // Compute PDF value
+            double dist_squared = glm::distance2(origin, rec.p);
+            // double dist_squared = rec.t * rec.t * glm::length2(direction);
+            double cosine = std::fabs(glm::dot(direction, normal)) / glm::length(direction);
+            
+            return dist_squared / (cosine * area);
+        }
+
+        glm::vec3 random(const glm::vec3& origin) const override {
+            // Vector from origin to random point on quad
+            glm::vec3 p = Q + (random_float() * u) + (random_float() * v);
+            return p - origin;
+        }
+
     private:
         glm::vec3 Q;
         glm::vec3 u, v;
@@ -74,6 +96,7 @@ class quad : public hittable {
         aabb bbox;
         glm::vec3 normal;
         double D;
+        double area;
 };
 
 inline std::shared_ptr<hittable_list> box(const glm::vec3& a, const glm::vec3& b, std::shared_ptr<material> mat) {

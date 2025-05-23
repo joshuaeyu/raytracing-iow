@@ -44,6 +44,20 @@ class hittable_list : public hittable {
 
         aabb bounding_box() const override { return bbox; }
 
+        double pdf_value(const glm::vec3& origin, const glm::vec3& direction) const override {
+            double weight = 1.0 / objects.size();
+            double sum = 0.0;
+
+            for (const auto& object : objects)
+                sum += object->pdf_value(origin, direction);
+            
+            return sum * weight;
+        }
+
+        glm::vec3 random(const glm::vec3& origin) const override {
+            int size = objects.size();
+            return objects[random_int(0, size-1)]->random(origin);
+        }
     private:
         aabb bbox;
 };

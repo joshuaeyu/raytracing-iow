@@ -44,6 +44,21 @@ inline float random_int(int min, int max) {
     return distribution(generator);
 }
 
+inline glm::vec3 random_cosine_direction() {
+    // Cosine sample a hemisphere
+    // - Generates a vector symmetric about the z-axis and according to a cosine distribution of the 
+    // angle against the z-axis in the positive hemisphere
+    double r1 = random_double();
+    double r2 = random_double();
+
+    double phi = 2 * pi * r1;
+    double x = std::cos(phi) * std::sqrt(r2);
+    double y = std::sin(phi) * std::sqrt(r2);
+    double z = std::sqrt(1 - r2);
+
+    return glm::vec3(x, y, z);
+}
+
 #include "color.h"
 #include "ray.h"
 #include "vec3.h"

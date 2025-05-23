@@ -19,6 +19,20 @@ void write_color(std::ostream& out, const glm::vec3& pixel_color) {
     auto g = pixel_color.g;
     auto b = pixel_color.b;
 
+    // Account for NaN values
+    if (r != r) {
+        r = 0.0;
+        std::clog << "r value NaN!" << std::endl;
+    }
+    if (g != g) {
+        g = 0.0;
+        std::clog << "g value NaN!" << std::endl;
+    }
+    if (b != b) {
+        b = 0.0;
+        std::clog << "b value NaN!" << std::endl;
+    }
+
     // Gamma correction
     r = linear_to_gamma(r);
     g = linear_to_gamma(g);

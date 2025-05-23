@@ -75,7 +75,7 @@ void bouncing_spheres() {
     cam.defocus_angle = 0.6;
     cam.focus_dist    = 10.0;
 
-    cam.render(world);
+    // cam.render(world);
 }
 
 // For image_width = 400, samples_per_pixel = 50, max_depth = 10
@@ -107,7 +107,7 @@ void checkered_spheres() {
 
     cam.defocus_angle = 0;;
 
-    cam.render(world);
+    // cam.render(world);
 }
 
 void earth() {
@@ -132,7 +132,7 @@ void earth() {
 
     cam.defocus_angle = 0;
 
-    cam.render(*globe);
+    // cam.render(*globe);
 }
 
 void perlin_spheres() {
@@ -159,7 +159,7 @@ void perlin_spheres() {
 
     cam.defocus_angle = 0;
 
-    cam.render(world); 
+    // cam.render(world); 
 }
 
 void quads() {
@@ -194,7 +194,7 @@ void quads() {
 
     cam.defocus_angle = 0;
 
-    cam.render(world);
+    // cam.render(world);
 }
 
 void simple_light() {
@@ -224,7 +224,7 @@ void simple_light() {
 
     cam.defocus_angle = 0;
 
-    cam.render(world);
+    // cam.render(world);
 }
 
 void cornell_box() {
@@ -242,22 +242,35 @@ void cornell_box() {
     world.add(std::make_shared<quad>(glm::vec3(555,555,555), glm::vec3(-555,0,0), glm::vec3(0,0,-555), white));
     world.add(std::make_shared<quad>(glm::vec3(0,0,555), glm::vec3(555,0,0), glm::vec3(0,555,0), white));
 
+    // std::shared_ptr<material> aluminum = std::make_shared<metal>(glm::vec3(0.8, 0.85, 0.88), 0.0);
     std::shared_ptr<hittable> box1 = box(glm::vec3(0,0,0), glm::vec3(165,330,165), white);
     box1 = std::make_shared<rotate_y>(box1, 15);
     box1 = std::make_shared<translate>(box1, glm::vec3(265,0,295));
     world.add(box1);
 
-    std::shared_ptr<hittable> box2 = box(glm::vec3(0,0,0), glm::vec3(165,165,165), white);
-    box2 = std::make_shared<rotate_y>(box2, -18);
-    box2 = std::make_shared<translate>(box2, glm::vec3(130,0,65));
-    world.add(box2);
+    std::shared_ptr<dielectric> glass = std::make_shared<dielectric>(1.5);
+    std::shared_ptr<hittable> glass_sphere = std::make_shared<sphere>(glm::vec3(190,90,190), 90, glass);
+    world.add(glass_sphere);
+
+    // std::shared_ptr<hittable> box2 = box(glm::vec3(0,0,0), glm::vec3(165,165,165), white);
+    // box2 = std::make_shared<rotate_y>(box2, -18);
+    // box2 = std::make_shared<translate>(box2, glm::vec3(130,0,65));
+    // world.add(box2);
+
+    // Note that this is ONLY used to steer samples toward objects we deem important
+    auto empty_material = std::make_shared<material>();
+    hittable_list lights;
+    // Ceiling light
+    lights.add(std::make_shared<quad>(glm::vec3(343,554,332), glm::vec3(-130,0,0), glm::vec3(0,0,-105), empty_material));
+    // Glass sphere
+    lights.add(std::make_shared<sphere>(glm::vec3(190,90,190), 90, empty_material));
 
     camera cam;
 
     cam.aspect_ratio      = 1.0;
-    cam.image_width       = 600;
-    cam.samples_per_pixel = 50;
-    cam.max_depth         = 10;
+    cam.image_width       = 800;
+    cam.samples_per_pixel = 1000;
+    cam.max_depth         = 250;
     cam.background        = glm::vec3(0,0,0);
 
     cam.vfov     = 40;
@@ -267,7 +280,7 @@ void cornell_box() {
 
     cam.defocus_angle = 0;
 
-    cam.render(world);
+    cam.render(world, lights);
 }
 
 void cornell_smoke() {
@@ -311,7 +324,7 @@ void cornell_smoke() {
 
     cam.defocus_angle = 0;
 
-    cam.render(world);
+    // cam.render(world);
 }
 
 void final_scene(int image_width, int samples_per_pixel, int max_depth) {
@@ -396,11 +409,11 @@ void final_scene(int image_width, int samples_per_pixel, int max_depth) {
 
     cam.defocus_angle = 0;
 
-    cam.render(world);
+    // cam.render(world);
 }
 
 int main() {
-    switch (9) {
+    switch (7) {
         case 1:  bouncing_spheres();          break;
         case 2:  checkered_spheres();         break;
         case 3:  earth();                     break;
@@ -410,6 +423,6 @@ int main() {
         case 7:  cornell_box();               break;
         case 8:  cornell_smoke();             break;
         case 9:  final_scene(800, 10000, 40); break;
-        default: final_scene(400,   200, 10); break;
+        case 10: final_scene(800,  1000, 40); break;
     }
 }
